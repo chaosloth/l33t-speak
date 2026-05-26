@@ -11,19 +11,16 @@ on:
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build docs
+  deploy:
+    name: Build and deploy
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -37,18 +34,22 @@ jobs:
       - name: Build docs
         run: npm run docs:build
 
-      - uses: actions/upload-pages-artifact@v4
-        with:
-          path: docs-site/.vitepress/dist
-
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy to gh-pages
+        run: |
+          cp docs-site/.vitepress/dist/CNAME /tmp/CNAME
+          git fetch origin gh-pages 2>/dev/null || true
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git checkout gh-pages
+            git pull --ff-only origin gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf --quiet .
+          fi
+          cp -r docs-site/.vitepress/dist/* .
+          cp /tmp/CNAME CNAME
+          touch .nojekyll
+          git add .
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "deploy: $(date -u +'%Y-%m-%d %H:%M UTC')" || true
+          git push origin gh-pages

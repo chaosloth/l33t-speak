@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.l33t-speak.dictation-helper</string>
+    <key>CFBundleName</key>
+    <string>Dictation Helper</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This helper needs microphone access for voice-to-text dictation.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>This helper uses speech recognition to convert voice to text.</string>
+</dict>
+</plist>

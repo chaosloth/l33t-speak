@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { insertText } from "../insertion";
+import { insertText, InsertTarget } from "../insertion";
 
 vi.mock(
   "vscode",
@@ -15,11 +15,10 @@ vi.mock(
 );
 
 describe("insertText", () => {
-  it("shows warning when no active editor or terminal", async () => {
+  it("shows warning when target is none", async () => {
     const vscode = await import("vscode");
-    (vscode.window as any).activeTextEditor = undefined;
-    (vscode.window as any).activeTerminal = undefined;
-    const result = await insertText("hello");
+    const target: InsertTarget = { type: "none" };
+    const result = await insertText("hello", target);
     expect(result).toBe(false);
     expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
       "No active editor or terminal to insert dictation"
@@ -37,14 +36,22 @@ describe("insertText", () => {
       },
     };
 
-    const vscode = await import("vscode");
-    (vscode.window as any).activeTextEditor = mockEditor;
-
-    const result = await insertText("world");
+    const target: InsertTarget = { type: "editor", editor: mockEditor as any };
+    const result = await insertText("world", target);
     expect(result).toBe(true);
     expect(mockEdit).toHaveBeenCalledWith(
       { line: 0, character: 5 },
       "world"
     );
+  });
+
+  it("sends text to terminal without newline", async () => {
+    const mockSendText = vi.fn();
+    const mockTerminal = { sendText: mockSendText } as any;
+
+    const target: InsertTarget = { type: "terminal", terminal: mockTerminal };
+    const result = await insertText("hello world", target);
+    expect(result).toBe(true);
+    expect(mockSendText).toHaveBeenCalledWith("hello world", false);
   });
 });

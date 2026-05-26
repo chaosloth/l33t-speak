@@ -4,7 +4,12 @@ import { StatusBarManager } from "./statusBar";
 import { MacOSEngine } from "./engines/macos";
 import { WindowsEngine } from "./engines/windows";
 import { WebViewEngine } from "./engines/webview";
-import { insertText, setTerminalFocused } from "./insertion";
+import {
+  insertText,
+  captureInsertTarget,
+  setLastFocusWasTerminal,
+  InsertTarget,
+} from "./insertion";
 import { playStartTone, playStopTone, playCancelTone } from "./tones";
 import { RecognitionEngine } from "./types";
 
@@ -12,6 +17,7 @@ let recognizer: RecognizerManager;
 let statusBar: StatusBarManager;
 let lastPartialText: string = "";
 let finalInserted: boolean = false;
+let currentTarget: InsertTarget = { type: "none" };
 
 export function activate(context: vscode.ExtensionContext) {
   const config = vscode.workspace.getConfiguration("l33t-speak");
@@ -37,13 +43,25 @@ export function activate(context: vscode.ExtensionContext) {
   const recordingContext = "l33t-speak.isRecording";
   vscode.commands.executeCommand("setContext", recordingContext, false);
 
-  // Track terminal focus via context key changes
-  // VS Code sets 'terminalFocus' context — we mirror it by watching editor focus
-  vscode.window.onDidChangeActiveTextEditor((editor) => {
-    setTerminalFocused(!editor);
-  });
-  // If no editor is active at start, terminal may be focused
-  setTerminalFocused(!vscode.window.activeTextEditor);
+  // Track terminal vs editor focus.
+  // When a text editor gains focus, terminal is not focused.
+  // When a terminal is activated or the active editor becomes undefined-ish,
+  // the terminal is focused.
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      if (editor) {
+        setLastFocusWasTerminal(false);
+      }
+    }),
+    vscode.window.onDidChangeActiveTerminal((terminal) => {
+      if (terminal) {
+        setLastFocusWasTerminal(true);
+      }
+    }),
+    vscode.window.onDidOpenTerminal(() => {
+      setLastFocusWasTerminal(true);
+    })
+  );
 
   recognizer.onStateChange = (state) => {
     if (state !== "error") {
@@ -56,7 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
   recognizer.onResult = (result) => {
     if (result.type === "final") {
       finalInserted = true;
-      insertText(result.text);
+      insertText(result.text, currentTarget);
       lastPartialText = "";
     } else {
       lastPartialText = result.text;
@@ -73,20 +91,22 @@ export function activate(context: vscode.ExtensionContext) {
   function startRecording() {
     lastPartialText = "";
     finalInserted = false;
-    const config = vscode.workspace.getConfiguration("l33t-speak");
-    const deviceId = config.get<string | null>("microphone", null);
-    const lang = config.get<string>("language", "en-US");
+    currentTarget = captureInsertTarget();
+    const cfg = vscode.workspace.getConfiguration("l33t-speak");
+    const deviceId = cfg.get<string | null>("microphone", null);
+    const lang = cfg.get<string>("language", "en-US");
     recognizer.start(deviceId, lang);
     playStartTone();
   }
 
   function stopRecording() {
     const pendingText = lastPartialText;
+    const target = currentTarget;
     recognizer.stop();
     playStopTone();
     setTimeout(() => {
       if (!finalInserted && pendingText) {
-        insertText(pendingText);
+        insertText(pendingText, target);
       }
       lastPartialText = "";
     }, 500);
@@ -94,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   function cancelRecording() {
     lastPartialText = "";
-    finalInserted = true; // prevent the fallback from inserting
+    finalInserted = true;
     recognizer.stop();
     playCancelTone();
     statusBar.setState("idle");
@@ -147,8 +167,8 @@ export function activate(context: vscode.ExtensionContext) {
         });
 
         if (selected) {
-          const config = vscode.workspace.getConfiguration("l33t-speak");
-          await config.update(
+          const cfg = vscode.workspace.getConfiguration("l33t-speak");
+          await cfg.update(
             "microphone",
             selected.description,
             vscode.ConfigurationTarget.Global

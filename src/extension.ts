@@ -10,6 +10,8 @@ import { RecognitionEngine } from "./types";
 let recognizer: RecognizerManager;
 let statusBar: StatusBarManager;
 let isRecordingContext: boolean = false;
+let lastPartialText: string = "";
+let finalInserted: boolean = false;
 
 export function activate(context: vscode.ExtensionContext) {
   const config = vscode.workspace.getConfiguration("l33t-speak");
@@ -36,7 +38,9 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.executeCommand("setContext", recordingContext, false);
 
   recognizer.onStateChange = (state) => {
-    statusBar.setState(state);
+    if (state !== "error") {
+      statusBar.setState(state);
+    }
     const recording = state === "recording";
     vscode.commands.executeCommand("setContext", recordingContext, recording);
     isRecordingContext = recording;
@@ -44,42 +48,64 @@ export function activate(context: vscode.ExtensionContext) {
 
   recognizer.onResult = (result) => {
     if (result.type === "final") {
+      finalInserted = true;
       insertTextAtCursor(result.text);
-      statusBar.setState("recording");
+      lastPartialText = "";
     } else {
+      lastPartialText = result.text;
       statusBar.setPartialText(result.text);
     }
   };
 
   recognizer.onError = (error) => {
+    if (!recognizer.isRecording) return;
     vscode.window.showErrorMessage(`L33t Speak: ${error}`);
     statusBar.setState("error");
   };
 
+  function startRecording() {
+    const config = vscode.workspace.getConfiguration("l33t-speak");
+    const deviceId = config.get<string | null>("microphone", null);
+    const lang = config.get<string>("language", "en-US");
+    lastPartialText = "";
+    finalInserted = false;
+    recognizer.start(deviceId, lang);
+  }
+
+  function stopRecording() {
+    const pendingText = lastPartialText;
+    recognizer.stop();
+    // If no final result was emitted, insert the last partial after a brief wait
+    setTimeout(() => {
+      if (!finalInserted && pendingText) {
+        insertTextAtCursor(pendingText);
+      }
+      lastPartialText = "";
+    }, 500);
+  }
+
   const toggleCmd = vscode.commands.registerCommand(
     "l33t-speak.toggleDictation",
     () => {
-      const config = vscode.workspace.getConfiguration("l33t-speak");
-      const deviceId = config.get<string | null>("microphone", null);
-      const lang = config.get<string>("language", "en-US");
-      recognizer.toggle(deviceId, lang);
+      if (recognizer.isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
     }
   );
 
   const startCmd = vscode.commands.registerCommand(
     "l33t-speak.startDictation",
     () => {
-      const config = vscode.workspace.getConfiguration("l33t-speak");
-      const deviceId = config.get<string | null>("microphone", null);
-      const lang = config.get<string>("language", "en-US");
-      recognizer.start(deviceId, lang);
+      startRecording();
     }
   );
 
   const stopCmd = vscode.commands.registerCommand(
     "l33t-speak.stopDictation",
     () => {
-      recognizer.stop();
+      stopRecording();
     }
   );
 

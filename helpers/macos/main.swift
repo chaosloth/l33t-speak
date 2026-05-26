@@ -78,14 +78,17 @@ class DictationHelper {
                 let text = result.bestTranscription.formattedString
                 if result.isFinal {
                     self.sendJSON(["type": "final", "text": text])
+                    DispatchQueue.main.async {
+                        self.cleanupAfterFinal()
+                    }
                 } else {
                     self.sendJSON(["type": "partial", "text": text])
                 }
             }
-            if let error = error {
-                self.sendJSON(["type": "error", "message": error.localizedDescription])
-                DispatchQueue.main.async {
-                    self.stopRecognition()
+            if let error = error as? NSError {
+                // Code 216 = "canceled" — expected when we stop, not a real error
+                if error.code != 216 {
+                    self.sendJSON(["type": "error", "message": error.localizedDescription])
                 }
             }
         }
@@ -107,10 +110,20 @@ class DictationHelper {
             audioEngine.stop()
             audioEngine.inputNode.removeTap(onBus: 0)
         }
+        // Signal end of audio — this lets the recognizer emit a final result
         recognitionRequest?.endAudio()
         recognitionRequest = nil
+
+        // Wait briefly for the final result, then force cleanup
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.cleanupAfterFinal()
+        }
+    }
+
+    private func cleanupAfterFinal() {
         recognitionTask?.cancel()
         recognitionTask = nil
+        recognitionRequest = nil
     }
 
     func handleCommand(_ json: [String: Any]) {

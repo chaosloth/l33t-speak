@@ -35,20 +35,24 @@
       {
         "command": "l33t-speak.toggleDictation",
         "key": "ctrl+shift+d",
-        "mac": "cmd+shift+d",
-        "when": "editorTextFocus"
+        "mac": "cmd+shift+d"
       },
       {
         "command": "l33t-speak.startDictation",
         "key": "ctrl+shift+space",
         "mac": "cmd+shift+space",
-        "when": "editorTextFocus && !l33t-speak.isRecording"
+        "when": "!l33t-speak.isRecording"
       },
       {
         "command": "l33t-speak.stopDictation",
         "key": "ctrl+shift+space",
         "mac": "cmd+shift+space",
-        "when": "editorTextFocus && l33t-speak.isRecording"
+        "when": "l33t-speak.isRecording"
+      },
+      {
+        "command": "l33t-speak.stopDictation",
+        "key": "escape",
+        "when": "l33t-speak.isRecording"
       }
     ],
     "menus": {

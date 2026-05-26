@@ -2,6 +2,7 @@
 
 A VS Code extension that provides voice-to-text dictation using OS-native speech recognition. Speak into your microphone and have your words inserted at your cursor — in the editor or the terminal.
 
+![Demo](docs/demo1.gif)
 ![Demo](docs/demo.gif)
 
 Built for developers who want hands-free text input while coding, writing commit messages, or interacting with CLI tools like Claude Code.
@@ -17,11 +18,11 @@ Built for developers who want hands-free text input while coding, writing commit
 
 ## Keybindings
 
-| Key | Action |
-|-----|--------|
-| `Cmd+Shift+D` (macOS) / `Ctrl+Shift+D` | Toggle dictation on/off |
-| `Cmd+Shift+Space` / `Ctrl+Shift+Space` | Start/stop dictation (alternative) |
-| `Escape` | Cancel dictation (discards buffered text) |
+| Key                                    | Action                                    |
+| -------------------------------------- | ----------------------------------------- |
+| `Cmd+Shift+D` (macOS) / `Ctrl+Shift+D` | Toggle dictation on/off                   |
+| `Cmd+Shift+Space` / `Ctrl+Shift+Space` | Start/stop dictation (alternative)        |
+| `Escape`                               | Cancel dictation (discards buffered text) |
 
 ## How It Works
 
@@ -41,12 +42,12 @@ On macOS, a compiled Swift helper binary handles the actual speech recognition a
 
 ## Extension Settings
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `l33t-speak.preferredEngine` | `auto` | Engine to use: `auto`, `macos`, `windows`, or `webview` |
-| `l33t-speak.microphone` | `null` | Device ID of preferred microphone |
-| `l33t-speak.language` | `en-US` | BCP-47 language code for recognition |
-| `l33t-speak.insertMode` | `final` | Insert on final result only, or stream interim results |
+| Setting                      | Default | Description                                             |
+| ---------------------------- | ------- | ------------------------------------------------------- |
+| `l33t-speak.preferredEngine` | `auto`  | Engine to use: `auto`, `macos`, `windows`, or `webview` |
+| `l33t-speak.microphone`      | `null`  | Device ID of preferred microphone                       |
+| `l33t-speak.language`        | `en-US` | BCP-47 language code for recognition                    |
+| `l33t-speak.insertMode`      | `final` | Insert on final result only, or stream interim results  |
 
 ## Development
 

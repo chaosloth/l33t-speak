@@ -25,7 +25,7 @@ export class MacOSEngine implements RecognitionEngine {
     return process.platform === "darwin";
   }
 
-  async start(deviceId: string | null, lang: string): Promise<void> {
+  private ensureProcess(): void {
     if (this.process) return;
 
     this.process = spawn(this.helperPath, [], { stdio: ["pipe", "pipe", "pipe"] });
@@ -59,7 +59,10 @@ export class MacOSEngine implements RecognitionEngine {
         this.onError?.(`Helper exited with code ${code}`);
       }
     });
+  }
 
+  async start(deviceId: string | null, lang: string): Promise<void> {
+    this.ensureProcess();
     this.sendCommand({ cmd: "start", deviceId: deviceId || undefined, lang });
   }
 
@@ -70,9 +73,7 @@ export class MacOSEngine implements RecognitionEngine {
 
   async listDevices(): Promise<AudioDevice[]> {
     return new Promise((resolve, reject) => {
-      if (!this.process) {
-        this.process = spawn(this.helperPath, [], { stdio: ["pipe", "pipe", "pipe"] });
-      }
+      this.ensureProcess();
 
       let buffer = "";
       const handler = (data: Buffer) => {

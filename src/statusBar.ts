@@ -28,7 +28,10 @@ export class StatusBarManager {
 
   setPartialText(text: string): void {
     if (this.state === "recording" && text) {
-      this.item.text = `$(mic-filled) "${text}"`;
+      const maxLen = 30;
+      const display = text.length > maxLen ? "…" + text.slice(-maxLen) : text;
+      this.item.text = `$(mic-filled) ${display}`;
+      this.item.tooltip = text;
     }
   }
 

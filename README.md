@@ -2,6 +2,8 @@
 
 A VS Code extension that provides voice-to-text dictation using OS-native speech recognition. Speak into your microphone and have your words inserted at your cursor — in the editor or the terminal.
 
+![Demo](docs/demo.gif)
+
 Built for developers who want hands-free text input while coding, writing commit messages, or interacting with CLI tools like Claude Code.
 
 ## Features

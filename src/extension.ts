@@ -6,8 +6,8 @@ import { WindowsEngine } from "./engines/windows";
 import { WebViewEngine } from "./engines/webview";
 import {
   insertText,
-  captureInsertTarget,
-  setLastFocusWasTerminal,
+  getEditorTarget,
+  getTerminalTarget,
   InsertTarget,
 } from "./insertion";
 import { playStartTone, playStopTone, playCancelTone } from "./tones";
@@ -43,26 +43,6 @@ export function activate(context: vscode.ExtensionContext) {
   const recordingContext = "l33t-speak.isRecording";
   vscode.commands.executeCommand("setContext", recordingContext, false);
 
-  // Track terminal vs editor focus.
-  // When a text editor gains focus, terminal is not focused.
-  // When a terminal is activated or the active editor becomes undefined-ish,
-  // the terminal is focused.
-  context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (editor) {
-        setLastFocusWasTerminal(false);
-      }
-    }),
-    vscode.window.onDidChangeActiveTerminal((terminal) => {
-      if (terminal) {
-        setLastFocusWasTerminal(true);
-      }
-    }),
-    vscode.window.onDidOpenTerminal(() => {
-      setLastFocusWasTerminal(true);
-    })
-  );
-
   recognizer.onStateChange = (state) => {
     if (state !== "error") {
       statusBar.setState(state);
@@ -88,10 +68,10 @@ export function activate(context: vscode.ExtensionContext) {
     statusBar.setState("error");
   };
 
-  function startRecording() {
+  function startRecording(target: InsertTarget) {
     lastPartialText = "";
     finalInserted = false;
-    currentTarget = captureInsertTarget();
+    currentTarget = target;
     const cfg = vscode.workspace.getConfiguration("l33t-speak");
     const deviceId = cfg.get<string | null>("microphone", null);
     const lang = cfg.get<string>("language", "en-US");
@@ -120,13 +100,26 @@ export function activate(context: vscode.ExtensionContext) {
     statusBar.setState("idle");
   }
 
+  // Start dictation targeting the editor
   const toggleCmd = vscode.commands.registerCommand(
     "l33t-speak.toggleDictation",
     () => {
       if (recognizer.isRecording) {
         stopRecording();
       } else {
-        startRecording();
+        startRecording(getEditorTarget());
+      }
+    }
+  );
+
+  // Start dictation targeting the terminal
+  const toggleTerminalCmd = vscode.commands.registerCommand(
+    "l33t-speak.toggleDictationTerminal",
+    () => {
+      if (recognizer.isRecording) {
+        stopRecording();
+      } else {
+        startRecording(getTerminalTarget());
       }
     }
   );
@@ -134,7 +127,7 @@ export function activate(context: vscode.ExtensionContext) {
   const startCmd = vscode.commands.registerCommand(
     "l33t-speak.startDictation",
     () => {
-      startRecording();
+      startRecording(getEditorTarget());
     }
   );
 
@@ -184,7 +177,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    toggleCmd, startCmd, stopCmd, cancelCmd, selectMicCmd
+    toggleCmd, toggleTerminalCmd, startCmd, stopCmd, cancelCmd, selectMicCmd
   );
   context.subscriptions.push(statusBar);
   context.subscriptions.push({ dispose: () => recognizer.dispose() });

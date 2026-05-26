@@ -27,6 +27,10 @@
         "title": "Stop Dictation"
       },
       {
+        "command": "l33t-speak.toggleDictationTerminal",
+        "title": "Toggle Dictation (Terminal)"
+      },
+      {
         "command": "l33t-speak.cancelDictation",
         "title": "Cancel Dictation"
       },
@@ -37,15 +41,22 @@
     ],
     "keybindings": [
       {
-        "command": "l33t-speak.toggleDictation",
+        "command": "l33t-speak.toggleDictationTerminal",
         "key": "ctrl+shift+d",
-        "mac": "cmd+shift+d"
+        "mac": "cmd+shift+d",
+        "when": "terminalFocus && !l33t-speak.isRecording"
       },
       {
-        "command": "l33t-speak.startDictation",
-        "key": "ctrl+shift+space",
-        "mac": "cmd+shift+space",
-        "when": "!l33t-speak.isRecording"
+        "command": "l33t-speak.toggleDictation",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d",
+        "when": "!terminalFocus && !l33t-speak.isRecording"
+      },
+      {
+        "command": "l33t-speak.stopDictation",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d",
+        "when": "l33t-speak.isRecording"
       },
       {
         "command": "l33t-speak.stopDictation",

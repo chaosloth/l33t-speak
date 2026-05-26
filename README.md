@@ -5,6 +5,8 @@ A VS Code extension that provides voice-to-text dictation using OS-native speech
 ![Demo](docs/demo1.gif)
 ![Demo](docs/demo.gif)
 
+[![VS Code Marketplace](https://img.shields.io/badge/VS_Code_Marketplace-Install-blue?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=conno.l33t-speak)
+
 Built for developers who want hands-free text input while coding, writing commit messages, or interacting with CLI tools like Claude Code.
 
 ## Features

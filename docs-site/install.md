@@ -1,24 +1,13 @@
 # Installation
 
-## From VS Code Marketplace
+<a href="vscode:extension/conno.l33t-speak" style="display:inline-block;padding:10px 24px;background:#D35400;color:white;border-radius:8px;text-decoration:none;font-weight:bold;font-size:1rem">Install from VS Code Marketplace</a>
 
-1. Open VS Code
-2. Press `Cmd+Shift+X` (macOS) or `Ctrl+Shift+X` to open Extensions
-3. Search for **"L33t Speak"**
-4. Click **Install**
+[View in Marketplace](https://marketplace.visualstudio.com/items?itemName=conno.l33t-speak) (opens in browser)
 
 Or install from the command line:
 
 ```bash
-code --install-extension chaosloth.l33t-speak
-```
-
-## From VSIX File
-
-Download the latest `.vsix` from [GitHub Releases](https://github.com/chaosloth/l33t-speak/releases), then:
-
-```bash
-code --install-extension l33t-speak-0.1.0.vsix
+code --install-extension conno.l33t-speak
 ```
 
 ## Requirements

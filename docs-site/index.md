@@ -13,7 +13,7 @@ hero:
       link: /guide/
     - theme: alt
       text: Install Extension
-      link: /install
+      link: vscode:extension/conno.l33t-speak
 features:
   - icon: 🎤
     title: Native Speech Recognition

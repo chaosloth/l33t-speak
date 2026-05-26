@@ -4,12 +4,12 @@ import { StatusBarManager } from "./statusBar";
 import { MacOSEngine } from "./engines/macos";
 import { WindowsEngine } from "./engines/windows";
 import { WebViewEngine } from "./engines/webview";
-import { insertTextAtCursor } from "./insertion";
+import { insertText, setTerminalFocused } from "./insertion";
+import { playStartTone, playStopTone, playCancelTone } from "./tones";
 import { RecognitionEngine } from "./types";
 
 let recognizer: RecognizerManager;
 let statusBar: StatusBarManager;
-let isRecordingContext: boolean = false;
 let lastPartialText: string = "";
 let finalInserted: boolean = false;
 
@@ -37,19 +37,26 @@ export function activate(context: vscode.ExtensionContext) {
   const recordingContext = "l33t-speak.isRecording";
   vscode.commands.executeCommand("setContext", recordingContext, false);
 
+  // Track terminal focus via context key changes
+  // VS Code sets 'terminalFocus' context — we mirror it by watching editor focus
+  vscode.window.onDidChangeActiveTextEditor((editor) => {
+    setTerminalFocused(!editor);
+  });
+  // If no editor is active at start, terminal may be focused
+  setTerminalFocused(!vscode.window.activeTextEditor);
+
   recognizer.onStateChange = (state) => {
     if (state !== "error") {
       statusBar.setState(state);
     }
     const recording = state === "recording";
     vscode.commands.executeCommand("setContext", recordingContext, recording);
-    isRecordingContext = recording;
   };
 
   recognizer.onResult = (result) => {
     if (result.type === "final") {
       finalInserted = true;
-      insertTextAtCursor(result.text);
+      insertText(result.text);
       lastPartialText = "";
     } else {
       lastPartialText = result.text;
@@ -64,24 +71,33 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   function startRecording() {
+    lastPartialText = "";
+    finalInserted = false;
     const config = vscode.workspace.getConfiguration("l33t-speak");
     const deviceId = config.get<string | null>("microphone", null);
     const lang = config.get<string>("language", "en-US");
-    lastPartialText = "";
-    finalInserted = false;
     recognizer.start(deviceId, lang);
+    playStartTone();
   }
 
   function stopRecording() {
     const pendingText = lastPartialText;
     recognizer.stop();
-    // If no final result was emitted, insert the last partial after a brief wait
+    playStopTone();
     setTimeout(() => {
       if (!finalInserted && pendingText) {
-        insertTextAtCursor(pendingText);
+        insertText(pendingText);
       }
       lastPartialText = "";
     }, 500);
+  }
+
+  function cancelRecording() {
+    lastPartialText = "";
+    finalInserted = true; // prevent the fallback from inserting
+    recognizer.stop();
+    playCancelTone();
+    statusBar.setState("idle");
   }
 
   const toggleCmd = vscode.commands.registerCommand(
@@ -106,6 +122,13 @@ export function activate(context: vscode.ExtensionContext) {
     "l33t-speak.stopDictation",
     () => {
       stopRecording();
+    }
+  );
+
+  const cancelCmd = vscode.commands.registerCommand(
+    "l33t-speak.cancelDictation",
+    () => {
+      cancelRecording();
     }
   );
 
@@ -140,7 +163,9 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(toggleCmd, startCmd, stopCmd, selectMicCmd);
+  context.subscriptions.push(
+    toggleCmd, startCmd, stopCmd, cancelCmd, selectMicCmd
+  );
   context.subscriptions.push(statusBar);
   context.subscriptions.push({ dispose: () => recognizer.dispose() });
 }
@@ -158,7 +183,6 @@ function buildEngineList(
   if (preferred === "windows") return [windows, webview];
   if (preferred === "webview") return [webview];
 
-  // "auto" — platform-native first, webview fallback
   if (process.platform === "darwin") return [macos, webview];
   if (process.platform === "win32") return [windows, webview];
   return [webview];

@@ -27,6 +27,10 @@
         "title": "Stop Dictation"
       },
       {
+        "command": "l33t-speak.cancelDictation",
+        "title": "Cancel Dictation"
+      },
+      {
         "command": "l33t-speak.selectMicrophone",
         "title": "Select Microphone"
       }
@@ -50,7 +54,7 @@
         "when": "l33t-speak.isRecording"
       },
       {
-        "command": "l33t-speak.stopDictation",
+        "command": "l33t-speak.cancelDictation",
         "key": "escape",
         "when": "l33t-speak.isRecording"
       }

@@ -1,15 +1,37 @@
 {
   "name": "l33t-speak",
   "displayName": "L33t Speak - Voice to Text",
-  "description": "Voice-to-text input using OS-native dictation",
-  "version": "0.0.1",
+  "description": "Voice-to-text input using OS-native dictation for VS Code. Dictate into editors and terminals.",
+  "version": "0.1.0",
   "author": "Christopher Connolly <cconnolly@twilio.com>",
+  "publisher": "conno",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chaosloth/l33t-speak"
+  },
+  "homepage": "https://l33tspeak.dev",
+  "bugs": {
+    "url": "https://github.com/chaosloth/l33t-speak/issues"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "voice",
+    "dictation",
+    "speech-to-text",
+    "microphone",
+    "accessibility"
+  ],
+  "icon": "docs/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
@@ -119,11 +141,16 @@
     }
   },
   "scripts": {
+    "vscode:prepublish": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs",
     "watch": "node esbuild.config.mjs --watch",
+    "package": "vsce package",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "docs:dev": "vitepress dev docs-site",
+    "docs:build": "vitepress build docs-site",
+    "docs:preview": "vitepress preview docs-site"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
@@ -131,6 +158,7 @@
     "@vscode/test-electron": "^2.3.0",
     "esbuild": "^0.20.0",
     "typescript": "^5.4.0",
+    "vitepress": "^1.6.0",
     "vitest": "^1.6.0"
   }
 }

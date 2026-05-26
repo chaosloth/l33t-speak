@@ -1,6 +1,12 @@
 src/**
 helpers/**
 node_modules/**
+docs/**
+docs-site/**
+.vscode/**
+.github/**
 tsconfig.json
 esbuild.config.mjs
+vitest.config.ts
 .gitignore
+CLAUDE.md

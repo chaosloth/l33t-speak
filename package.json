@@ -3,6 +3,7 @@
   "displayName": "L33t Speak - Voice to Text",
   "description": "Voice-to-text input using OS-native dictation",
   "version": "0.0.1",
+  "author": "Christopher Connolly <cconnolly@twilio.com>",
   "engines": {
     "vscode": "^1.74.0"
   },

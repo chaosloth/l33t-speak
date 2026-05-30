@@ -41,6 +41,13 @@ export default defineConfig({
           { text: 'Microphone Selection', link: '/guide/microphone' },
         ],
       },
+      {
+        text: 'AI Gateway',
+        items: [
+          { text: 'Gateway Setup', link: '/guide/gateway' },
+          { text: 'Processing Modes', link: '/guide/modes' },
+        ],
+      },
     ],
     socialLinks: [
       { icon: 'github', link: 'https://github.com/chaosloth/l33t-speak' },

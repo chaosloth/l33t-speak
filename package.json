@@ -59,6 +59,14 @@
       {
         "command": "l33t-speak.selectMicrophone",
         "title": "Select Microphone"
+      },
+      {
+        "command": "l33t-speak.setGatewayApiKey",
+        "title": "Set Gateway API Key"
+      },
+      {
+        "command": "l33t-speak.selectMode",
+        "title": "Select Processing Mode"
       }
     ],
     "keybindings": [
@@ -135,6 +143,21 @@
             "streaming"
           ],
           "description": "Insert text on final result only, or stream interim results"
+        },
+        "l33t-speak.enableGateway": {
+          "type": "boolean",
+          "default": false,
+          "description": "Send dictation to the l33t gateway for AI-powered formatting and processing"
+        },
+        "l33t-speak.gatewayUrl": {
+          "type": "string",
+          "default": "https://gateway.l33tspeak.dev",
+          "description": "Base URL of the l33t gateway API"
+        },
+        "l33t-speak.gatewayApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key placeholder. Use 'L33t Speak: Set Gateway API Key' command to securely store the key in the OS keychain."
         }
       }
     }
@@ -155,7 +178,7 @@
     "@types/node": "^25.9.1",
     "@types/vscode": "^1.74.0",
     "@vscode/test-electron": "^2.3.0",
-    "esbuild": "^0.20.0",
+    "esbuild-wasm": "^0.20.2",
     "typescript": "^5.4.0",
     "vitepress": "^1.6.0",
     "vitest": "^1.6.0"

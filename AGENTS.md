@@ -1,71 +1,46 @@
 # AGENTS.md
 
-This file provides guidance to AI coding agents working in this repository.
+## Current Scope
+
+- This repo is currently a single-package VS Code extension. The broader l33t-speak gateway/monorepo plan is not implemented here yet; do not assume `apps/`, `packages/`, or server code exists in this repository.
+- This package still uses npm (`package-lock.json`) rather than a pnpm workspace. Keep using the verified local npm scripts here until the extension is migrated deliberately.
+- Use Node 20. The repo docs assume `export PATH="$HOME/.nvm/versions/node/v20.20.0/bin:$PATH"` because older system Node versions are too old for the toolchain.
 
 ## Commands
 
 ```bash
-# Node 20 required — system default is v14
-export PATH="$HOME/.nvm/versions/node/v20.20.0/bin:$PATH"
-
-npm run build        # esbuild bundle src/extension.ts -> dist/extension.js (CJS, Node 18)
-npm run watch        # esbuild --watch
-npm test             # vitest run
-npm run lint         # type check only (tsc --noEmit) — no ESLint or style linting
-
-# Single test file
+npm install
+npm run build
+npm run watch
+npm test
 npx vitest run src/test/recognizer.test.ts
-
-# Swift helper (macOS only)
-./helpers/macos/build.sh   # compiles -> bin/darwin/dictation-helper (committed binary)
+npm run lint
+npm run docs:build
+./helpers/macos/build.sh
 ```
 
-## Build
+- `npm run build` bundles `src/extension.ts` to `dist/extension.js` with esbuild as CJS targeting Node 18; `vscode` stays external.
+- `npm run lint` is only `tsc --noEmit`. There is no ESLint, Prettier, or Biome config.
+- `./helpers/macos/build.sh` rebuilds and ad-hoc signs `bin/darwin/dictation-helper`; that binary is expected in-repo.
 
-- esbuild bundles a single entrypoint (`src/extension.ts`) to CJS targeting Node 18, output to `dist/extension.js`
-- `vscode` module is externalized — never bundled, imported at runtime by the extension host
-- `tsconfig.json` **excludes** `src/test/**/*` from type checking, but vitest still runs those files
+## Testing And CI
 
-## Testing
-
-- Uses vitest with `vi.mock("vscode", ..., { virtual: true })` — the vscode mock is created inline in test files, not in `__mocks__/`
-- No CI runs tests or lint. The only CI workflow deploys VitePress docs to GitHub Pages on push to `main`
+- `tsconfig.json` excludes `src/test/**/*`, so `npm run lint` does not type-check tests. Run Vitest for any test change.
+- Tests use inline `vi.mock("vscode", ..., { virtual: true })` in each test file, not a shared `__mocks__/` setup.
+- `.github/workflows/docs.yml` is the only GitHub Actions workflow. It runs `npm install && npm run docs:build` on `main`; there is no CI coverage for extension build, typecheck, or tests.
 
 ## Architecture
 
-### Engine selection
+- `src/extension.ts` is the real entrypoint: command registration, engine list construction, status bar wiring, insertion, and audio feedback all start there.
+- `src/recognizer.ts` selects the first engine whose `isAvailable` is `true` and keeps it for the session. "Fallback" only means the initial engine ordering.
+- `src/engines/macos.ts` and `src/engines/windows.ts` treat platform match as availability. If a native helper is missing or broken, the manager still selects it and will not fall back to `webview` automatically.
+- Native engines use JSON lines over stdin/stdout. Outbound commands are `start`, `stop`, and `listDevices`; inbound messages are `partial`, `final`, `error`, and `devices`.
+- `src/engines/webview.ts` is the always-available fallback and embeds the Web Speech API client inline in the panel HTML.
+- `src/insertion.ts` inserts into every active editor selection or calls `terminal.sendText(text, false)` with no trailing newline. The insert target is chosen when recording starts, not when text is finally inserted.
+- On stop, `src/extension.ts` waits 500 ms for a final recognition event; if none arrives, it inserts the last partial transcript. Preserve that behaviour when changing stop/cancel logic.
 
-`RecognizerManager` selects the **first available** engine from the list — the rest are fallbacks. Engine order depends on `l33t-speak.preferredEngine` config:
+## Gotchas
 
-| Config       | Order                        |
-| ------------ | ---------------------------- |
-| `auto`       | native → webview (by platform) |
-| `macos`      | macos → webview              |
-| `windows`    | windows → webview            |
-| `webview`    | webview only                 |
-
-### Engine communication protocol
-
-Native engines spawn a subprocess and communicate via **JSON lines over stdin/stdout**. The webview engine uses `postMessage`. Protocol message types are in `src/types.ts`:
-
-- **Inbound** (helper → extension): `{ type: "partial" | "final" | "error" | "devices", ... }`
-- **Outbound** (extension → helper): `{ cmd: "start" | "stop" | "listDevices", deviceId?, lang? }`
-
-### Key files
-
-- `src/extension.ts` — activation, command registration, wiring
-- `src/recognizer.ts` — engine selection, start/stop/toggle lifecycle
-- `src/engines/macos.ts` — spawns `bin/darwin/dictation-helper` (committed Swift binary)
-- `src/engines/windows.ts` — spawns `bin/win32/dictation-helper.ps1` (committed PowerShell)
-- `src/engines/webview.ts` — hidden WebView panel, always-available fallback
-- `src/insertion.ts` — routes recognized text to editor or terminal
-- `src/statusBar.ts` — recording state and mic name display
-- `src/tones.ts` — start/stop/cancel audio feedback
-
-### Insertion
-
-Text is inserted at all active selections in the editor. For terminals, `terminal.sendText(text, false)` is used (no trailing newline). The target is locked in when recording starts (editor vs terminal), not re-evaluated on insertion.
-
-### Debugging
-
-Press F5 to launch the Extension Development Host. The `.vscode/launch.json` has a `preLaunchTask` that runs the default npm build task first.
+- `l33t-speak.insertMode` is contributed in `package.json` and documented, but current runtime code never reads it. Do not assume streaming insertion is implemented.
+- `activationEvents` is intentionally empty; command contributions activate the extension on VS Code `^1.74.0`.
+- F5 launches the Extension Development Host, and `.vscode/launch.json` runs the default npm `build` task first.

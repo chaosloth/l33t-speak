@@ -1,4 +1,4 @@
-import * as esbuild from "esbuild";
+import * as esbuild from "esbuild-wasm";
 
 const watch = process.argv.includes("--watch");
 

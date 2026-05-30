@@ -106,23 +106,6 @@ While the gateway processes your dictation, the status bar shows an animated rai
 
 The background color cycles through the rainbow while a spinner animates. The indicator is blue/cyan for local processing (rules-engine) and full rainbow for hosted LLM calls (DeepSeek/OpenAI).
 
-## API Keys for Hosted Models
-
-For AI enhancement via real language models, configure your provider keys in the `.env` file at the monorepo root:
-
-```bash
-# .env (never commit this file)
-OPENAI_API_KEY="sk-..."
-DEEPSEEK_API_KEY="sk-..."
-ANTHROPIC_API_KEY="sk-ant-..."
-```
-
-When configured, the router automatically escalates complex dictation to the cheapest capable model:
-
-- **Simple text** → Rules Engine (free, local, instant)
-- **Complex text** → DeepSeek Flash ($0.00014/1K tokens)
-- **Heavy enhancement** → OpenAI GPT-4 Turbo ($0.01/1K tokens)
-
 ## One-Command Dev Environment
 
 ```bash

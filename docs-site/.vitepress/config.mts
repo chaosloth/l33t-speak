@@ -31,6 +31,7 @@ export default defineConfig({
           { text: 'Installation', link: '/install' },
           { text: 'Quick Start', link: '/guide/' },
           { text: 'Configuration', link: '/guide/configuration' },
+          { text: 'Processing Modes', link: '/guide/modes' },
         ],
       },
       {
@@ -45,7 +46,6 @@ export default defineConfig({
         text: 'AI Gateway',
         items: [
           { text: 'Gateway Setup', link: '/guide/gateway' },
-          { text: 'Processing Modes', link: '/guide/modes' },
         ],
       },
     ],
